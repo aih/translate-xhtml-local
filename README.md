@@ -1,5 +1,18 @@
 # XHTML Translation Service
 
+> [!WARNING]
+> **CURRENT STATUS: POOR TRANSLATION QUALITY**
+> 
+> This application is currently **not producing reliable translations** with the tested local LLMs (e.g., `gemma:2b`).
+> 
+> **Known Issues:**
+> - **Extraneous Text**: The model often includes conversational filler (e.g., "Sure, here is the translation:", "The translated text is:", "In Portuguese this means...").
+> - **Incomplete/Incorrect Translations**: Short phrases or headers are sometimes skipped or hallucinated.
+> 
+> Please refer to the `output_samples/` directory to see examples of these issues (e.g., look for "Sure, here is..." inside the HTML tags).
+> 
+> **Work in Progress**: We are actively working on prompt engineering and model selection to enforce strict output formats.
+
 This is a Golang application that translates XHTML pages using a local LLM (e.g., Ollama with `google/translategemma-4b-it` or compatible models).
 
 ## Features
