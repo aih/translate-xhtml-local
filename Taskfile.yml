@@ -1,0 +1,42 @@
+version: '3'
+
+tasks:
+  build:
+    desc: Build the application
+    cmds:
+      - go build -o bin/server cmd/server/main.go
+
+  run:
+    desc: Run the application locally
+    cmds:
+      - go run cmd/server/main.go
+
+  test:
+    desc: Run unit tests
+    cmds:
+      - go test -v ./internal/...
+
+  test-integration:
+    desc: Run large-scale integration tests
+    cmds:
+      - go test -v -timeout 10m ./test/integration/...
+
+  docker-build:
+    desc: Build the Docker image
+    cmds:
+      - docker build -t translate-xhtml-local .
+
+  docker-run:
+    desc: Run the Docker container
+    cmds:
+      - docker run -p 8090:${PORT:-8090} -e PORT=${PORT:-8090} translate-xhtml-local
+
+  docs:
+    desc: Generate Swagger documentation
+    cmds:
+      - swag init -g internal/api/handler.go -o docs --parseDependency
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - rm -rf bin/ output/ test/integration/data/ test/integration/output/

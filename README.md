@@ -14,12 +14,30 @@ This is a Golang application that translates XHTML pages using a local LLM (e.g.
 ### Prerequisites
 
 - Go 1.21+
+- [Task](https://taskfile.dev/) (optional, for running tasks)
+- Docker (optional, for containerization)
 - A local LLM server (e.g., [Ollama](https://ollama.com/)) running `google/translategemma-4b-it` or similar.
 
-### Running the Server
+### Running with Task
 
 ```bash
-go run cmd/server/main.go --port 8080 --llm-url http://localhost:11434/api/generate --model google/translategemma-4b-it
+task run
+```
+
+### Running with Docker
+
+```bash
+task docker-build
+task docker-run
+```
+
+The server will be available at `http://localhost:8090`.
+Swagger UI is available at `http://localhost:8090/swagger/index.html`.
+
+### Manual Execution
+
+```bash
+go run cmd/server/main.go --port 8090 --llm-url http://localhost:11434/api/generate --model google/translategemma-4b-it
 ```
 
 ### API Endpoint
@@ -54,7 +72,13 @@ go run cmd/server/main.go --port 8080 --llm-url http://localhost:11434/api/gener
 Run unit tests:
 
 ```bash
-go test ./...
+task test
+```
+
+Run large-scale integration tests (downloads 20 forecast pages and translates them concurrently):
+
+```bash
+task test-integration
 ```
 
 ## Architecture
