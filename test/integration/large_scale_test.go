@@ -10,18 +10,33 @@ import (
 	"testing"
 	"time"
 
+	"github.com/arihershowitz/translate-xhtml-local/internal/llm"
 	"github.com/arihershowitz/translate-xhtml-local/internal/translator"
 )
 
-// MockLLM simulates a high-throughput LLM.
+// MockLLM simulates a high-throughput LLM with pseudo-translation.
 type MockLLM struct {
 	ModelName string
 }
 
 func (m *MockLLM) TranslateText(ctx context.Context, text, sourceLang, targetLang string) (string, error) {
-	// Simulate slight processing time but allow high concurrency
+	// Simulate slight processing time
 	time.Sleep(10 * time.Millisecond)
-	return fmt.Sprintf("[%s->%s] %s", sourceLang, targetLang, text), nil
+
+	// Pseudo-translation: distinct output that replaces original text
+	// e.g. "Hello" -> "[es] Olleh" (reversed + tag) or just distinct replacement
+	// For visibility, we'll produce a "lorem ipsum" style replacement relative to length,
+	// or simple character mapping if we want to preserve length.
+	// Let's do a simple visible transformation:
+	return fmt.Sprintf("[%s] %s", targetLang, reverse(text)), nil
+}
+
+func reverse(s string) string {
+	runes := []rune(s)
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		runes[i], runes[j] = runes[j], runes[i]
+	}
+	return string(runes)
 }
 
 func (m *MockLLM) GetModelName() string {
@@ -49,9 +64,40 @@ func TestLargeScaleTranslation(t *testing.T) {
 
 	languages := []string{"es", "fr", "de", "it", "pt", "ru", "zh", "ja", "ko", "nl"}
 
-	// Create service with MockLLM
-	mockLLM := &MockLLM{ModelName: "mock-high-throughput"}
-	service := translator.NewService(mockLLM)
+	// Create service
+	var service translator.TranslationService
+
+	// Check for real LLM env var
+	if os.Getenv("TEST_REAL_LLM") == "true" {
+		t.Log("Using REAL LLM for translation tests (this will be slow)")
+		model := os.Getenv("TEST_LLM_MODEL")
+		if model == "" {
+			model = "google/translategemma-4b-it"
+		}
+		llmClient := llm.NewClient("http://localhost:11434/api/generate", model)
+		service = translator.NewService(llmClient)
+	} else {
+		t.Log("Using MOCK LLM for translation tests. Set TEST_REAL_LLM=true to use real model.")
+		mockLLM := &MockLLM{ModelName: "mock-high-throughput"}
+		service = translator.NewService(mockLLM)
+	}
+
+	// Limit files for sampling if requested
+	if limitStr := os.Getenv("TEST_SAMPLE_LIMIT"); limitStr != "" {
+		// If sample.xhtml exists, use ONLY that for speed
+		sampleFile := filepath.Join(dataDir, "sample.xhtml")
+		if _, err := os.Stat(sampleFile); err == nil {
+			t.Log("Using sample.xhtml for quick sampling")
+			files = []string{sampleFile}
+		} else {
+			limit := 1
+			fmt.Sscanf(limitStr, "%d", &limit)
+			if limit < len(files) {
+				t.Logf("Limiting test to %d files for sampling", limit)
+				files = files[:limit]
+			}
+		}
+	}
 
 	var wg sync.WaitGroup
 	start := time.Now()

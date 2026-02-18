@@ -75,11 +75,31 @@ Run unit tests:
 task test
 ```
 
-Run large-scale integration tests (downloads 20 forecast pages and translates them concurrently):
+### Large Scale Integration Testing
+
+The integration tests verify the system's ability to handle high concurrency and preserve XHTML structure (including images).
+
+**Default Mode (Mock LLM)**:
+By default, `task test-integration` uses a **Mock LLM**.
+- **Behavior**: It "translates" text by **reversing it** (e.g., `Hello` -> `[es] olleH`).
+- **Purpose**: Validates concurrency, file handling, and structure preservation without the latency or GPU cost of a real model.
+- **Speed**: Very fast (~2 seconds for 200 files).
 
 ```bash
 task test-integration
 ```
+
+**Real LLM Mode**:
+To verify actual translation quality with your local model:
+- **Behavior**: Sends real requests to the configured LLM endpoint.
+- **Purpose**: End-to-end verification of translation logic.
+- **Speed**: Depends on your hardware (can take minutes).
+
+```bash
+TEST_REAL_LLM=true task test-integration
+```
+
+The output files are stored in `test/integration/output`. Sample real translations can be found in `output_samples/`.
 
 ## Architecture
 
