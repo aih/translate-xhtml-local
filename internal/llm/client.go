@@ -37,12 +37,25 @@ func (c *Client) GetModelName() string {
 // This example assumes an Ollama-compatible API or similar simple JSON interface.
 // Adjust the request/response structure based on the actual local server.
 func (c *Client) TranslateText(ctx context.Context, text, sourceLang, targetLang string) (string, error) {
-	prompt := fmt.Sprintf("Translate the following text from %s to %s. Output ONLY the translated text, with no additional commentary or markdown.\n\nText: %s", sourceLang, targetLang, text)
+	// Refined prompt to guide the model better
+	prompt := fmt.Sprintf(`Translate the following text from %s to %s. 
+Rules:
+1. Output ONLY the translated text.
+2. Do NOT add notes, explanations, or enclosing quotes.
+3. Preserve the original meaning and tone.
+4. If the text is a number or proper noun that shouldn't change, keep it as is.
+5. If the translation is unclear, provide the most direct literal translation.
+
+Text to translate:
+"%s"`, sourceLang, targetLang, text)
 
 	reqBody := map[string]interface{}{
 		"model":  c.model,
 		"prompt": prompt,
 		"stream": false,
+		"options": map[string]interface{}{
+			"temperature": 0.1, // Lower temperature for more deterministic/focused output
+		},
 	}
 
 	jsonBody, err := json.Marshal(reqBody)
