@@ -1,0 +1,69 @@
+definitions:
+  github_com_arihershowitz_translate-xhtml-local_internal_translator.Metadata:
+    properties:
+      duration:
+        type: integer
+      model:
+        type: string
+      timestamp:
+        type: string
+    type: object
+  internal_api.TranslationRequest:
+    properties:
+      source_lang:
+        type: string
+      target_lang:
+        type: string
+      xhtml:
+        type: string
+    required:
+    - source_lang
+    - target_lang
+    - xhtml
+    type: object
+  internal_api.TranslationResponse:
+    properties:
+      metadata:
+        $ref: '#/definitions/github_com_arihershowitz_translate-xhtml-local_internal_translator.Metadata'
+      translated_xhtml:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /translate:
+    post:
+      consumes:
+      - application/json
+      description: Translates XHTML content from source language to target language
+        using a local LLM.
+      parameters:
+      - description: Translation Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api.TranslationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api.TranslationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Translate XHTML content
+      tags:
+      - translation
+swagger: "2.0"
